@@ -1,9 +1,10 @@
--- KIRO HACK | UI MODULE (FULL)
+-- KIRO HACK | UI MODULE (FULL WITH MOUSE FIX)
 local K = shared.KIRO
 if not K then warn("[KIRO] Config не загружен!") return end
 
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local Stats = game:GetService("Stats")
 local Theme = K.Theme
@@ -530,6 +531,18 @@ task.spawn(function()
             ModeLabel.Text = "AIM " .. m .. " [" .. k .. "] " .. (K.Aiming and "●" or "○")
             ModeLabel.TextColor3 = K.Aiming and Theme.Green or Theme.TextDim
         end)
+    end
+end)
+
+-- ================= ФИКС МЫШКИ ДЛЯ МЕНЮ =================
+RunService.RenderStepped:Connect(function()
+    if K.MenuOpen then
+        if UIS.MouseBehavior ~= Enum.MouseBehavior.Default then
+            UIS.MouseBehavior = Enum.MouseBehavior.Default
+        end
+        if not UIS.MouseIconEnabled then
+            UIS.MouseIconEnabled = true
+        end
     end
 end)
 
