@@ -3,7 +3,7 @@
 -- =====================================================================
 print("[KIRO LOADER] Запуск модульной системы...")
 
-local GITHUB_BASE = "https://raw.githubusercontent.com/glazyndmitry15-lgtm/kiro-scripts/main/"
+local GITHUB_BASE = "https://raw.githubusercontent.com/glazyrindmitry15-lgtm/kiro-scripts/main/"
 
 local Modules = {
     "config.lua",
