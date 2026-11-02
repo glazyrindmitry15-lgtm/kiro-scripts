@@ -1,7 +1,4 @@
--- =====================================================================
--- KIRO HACK | ULTIMATE BYPASS CORE (COMBINED METHODS)
--- Внимание: используйте только на свой страх и риск.
--- =====================================================================
+-- KIRO HACK | ADVANCED SECURITY CORE (ANTI-DETECTION)
 local K = shared.KIRO
 if not K then return end
 local Players = game:GetService("Players")
@@ -9,97 +6,67 @@ local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
 
 -- 1. СПУФИНГ СВОЙСТВ (Property Spoofing)
--- Античит видит стандартные WalkSpeed/JumpPower, даже если чит изменил их.
 local oldIndex
-oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
-    if not checkcaller() then
-        if typeof(self) == "Instance" then
-            if self:IsA("Humanoid") and (key == "WalkSpeed" or key == "JumpPower") then
-                return 16
-            end
-            if self:IsA("BasePart") and key == "Size" and K.OriginalSizes[self] then
-                return K.OriginalSizes[self]
-            end
+oldIndex = hookmetamethod(game, "__index", function(self, key)
+    if not checkcaller() and typeof(self) == "Instance" then
+        if self:IsA("Humanoid") and (key == "WalkSpeed" or key == "JumpPower") then
+            return 16 -- Возвращаем стандартную скорость
+        end
+        if self:IsA("BasePart") and key == "Size" and K.OriginalSizes[self] then
+            return K.OriginalSizes[self] -- Скрываем измененный размер (Big Head)
         end
     end
     return oldIndex(self, key)
-end))
+end)
 
 -- 2. БЛОКИРОВКА REMOTE-СОБЫТИЙ АНТИЧИТА (Remote Blocking)
--- Блокируем отправку логов о нарушениях на сервер.
 local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
     if not checkcaller() and method == "FireServer" then
         local name = self.Name:lower()
-        if name:find("anticheat") or name:find("ac_") or name:find("detect") or name:find("ban") or name:find("report") then
-            return -- Сигнал не уходит
+        -- Блокируем отправку "палевных" логов на сервер
+        if name:find("anticheat") or name:find("detect") or name:find("ban") or name:find("report") then
+            return
         end
     end
     return oldNamecall(self, ...)
-end))
+end)
 
--- 3. ХУК ФУНКЦИЙ АНТИЧИТА (Function Hooking)
--- Делаем проверки античита всегда "успешными".
-if hookfunction and getgc then
+-- 3. БЕЗОПАСНАЯ СИМУЛЯЦИЯ ВВОДА (Safe Input)
+-- Вместо VirtualUser используем менее заметный метод
+function K.SafeInput(key)
     pcall(function()
-        for _, obj in ipairs(getgc(true)) do
-            if type(obj) == "function" then
-                local info = debug.getinfo(obj)
-                if info and info.name and info.name:lower():find("anticheat") then
-                    hookfunction(obj, function() return true end)
-                end
-            end
-        end
+        local vu = game:GetService("VirtualUser")
+        vu:CaptureController()
+        vu:ClickButton2(Vector2.new()) -- ClickButton2 менее палевный, чем ClickButton1
     end)
 end
 
--- 4. ДЕСИНК (Desync) – Phantom Positioning
--- Создаём рассинхрон между реальной позицией и той, что видят другие.
--- (Используем технику с setfflag, если экзекьютор поддерживает)
-pcall(function()
-    if setfflag then
-        setfflag("WorldStepMax", "-9999999999")
-        task.wait(1)
-        setfflag("WorldStepMax", "-1")
+-- 4. АНТИ-ДАМП (Anti-Dump)
+-- Скрываем наши функции от анализа
+local oldInfo = debug.info
+debug.info = function(...)
+    local args = {...}
+    if typeof(args[1]) == "function" and getfenv(args[1]).KIRO_PROTECTED then
+        return "C", "C", 1, 1 -- Притворяемся нативной C-функцией
     end
-end)
+    return oldInfo(...)
+end
 
--- 5. ОГРАНИЧЕНИЕ ДЕЛЬТЫ ДВИЖЕНИЯ (Movement Delta Clamp)
--- Не даём серверу увидеть рывки скорости. Плавно "размазываем" движение.
-local lastPos = {}
-RunService.Heartbeat:Connect(function(dt)
-    pcall(function()
-        local char = LP.Character
-        if char then
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local currentPos = hrp.Position
-                local last = lastPos[hrp]
-                if last then
-                    local delta = (currentPos - last).Magnitude
-                    local maxAllowed = 50 * dt -- Порог, можно настроить
-                    if delta > maxAllowed then
-                        hrp.CFrame = CFrame.new(last + (currentPos - last).Unit * maxAllowed)
-                    end
-                end
-                lastPos[hrp] = hrp.Position
-            end
-        end
-    end)
-end)
-
--- 6. БЕЗОПАСНЫЙ ANTI-AFK
+-- 5. ОЧИСТКА СЛЕДОВ (Cleanup)
 task.spawn(function()
-    while task.wait(1) do
-        if K.Settings.Security.AntiAFK then
-            pcall(function()
-                local vu = game:GetService("VirtualUser")
-                vu:CaptureController()
-                vu:ClickButton2(Vector2.new())
-            end)
-        end
+    while task.wait(5) do
+        pcall(function()
+            -- Восстанавливаем оригинальные размеры, если Big Head выключен
+            if not K.Settings.Utils.HeadExpander then
+                for part, size in pairs(K.OriginalSizes) do
+                    if part and part.Parent then part.Size = size end
+                end
+                K.OriginalSizes = {}
+            end
+        end)
     end
 end)
 
-print("[KIRO SECURITY] ULTIMATE BYPASS CORE активирован.")
+print("[KIRO SECURITY] Продвинутое ядро защиты активировано.")
