@@ -7,6 +7,7 @@ local GITHUB_BASE = "https://raw.githubusercontent.com/glazyrindmitry15-lgtm/kir
 
 local Modules = {
     "config.lua",
+    "modules/security.lua",
     "modules/ui.lua",
     "modules/aimbot.lua",
     "modules/esp.lua",
